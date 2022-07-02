@@ -67,6 +67,14 @@ une fois le serveur démarré, saisissez l'adresse suivante dans votre navigateu
 Vous êtes désormais prêt à tester les différentes fonctionnalités de l'outil.
 
 
+### 4) Notes et précisions
+
+
+Pour ce projet, les données de l’application sont stockées dans un fichier .json (db.json) qui n'est pas joint au projet.
+Ce fichier est mis en place lors de la création du premier client puis utilisé pour les autres fonctionnalités de l'application.
+
+
+
 ## <u>III - fonctionnalités utilisables</u>
 
 Voici, pour l'instant, les différentes fonctionnalités présentes dans l'outil:
