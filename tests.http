@@ -1,0 +1,71 @@
+################### CLIENTS ###################
+
+###
+# List clients
+GET http://127.0.0.1:8000/clients
+
+###
+# Create Client
+POST http://127.0.0.1:8000/clients
+
+{
+    "first_name": "Jean",
+    "name": "Dupont"
+}
+
+###
+# Get client
+GET http://127.0.0.1:8000/clients/1
+
+###
+# Update Client
+PUT http://127.0.0.1:8000/clients/1
+
+{
+    "first_name": "Jean",
+    "name": "Du Pont"
+}
+
+###
+# Delete Client
+DELETE http://127.0.0.1:8000/clients/1
+
+
+################### ACCOUNTS ###################
+
+###
+# List accounts
+GET http://127.0.0.1:8000/clients/1/accounts
+
+###
+# Create account
+POST http://127.0.0.1:8000/clients/1/accounts
+
+###
+# Get account
+GET http://127.0.0.1:8000/clients/1/accounts/1
+
+###
+# Delete account
+DELETE http://127.0.0.1:8000/clients/1/accounts/1/
+
+
+################### ACCOUNT ACTIONS ###################
+
+###
+# Deposit
+POST http://127.0.0.1:8000/clients/1/accounts/1/deposit
+
+{
+    "label": "Dépôt BNP Lyon",
+    "amount": 70
+}
+
+###
+# Withdrawal
+POST http://127.0.0.1:8000/clients/1/accounts/1/withdrawal
+
+{
+    "label": "Retrait BNP Paris",
+    "amount": 20
+}
