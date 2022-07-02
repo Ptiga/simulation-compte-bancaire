@@ -21,12 +21,15 @@ app = FastAPI()
 
 from fastapi.encoders import jsonable_encoder
 
+#Pour lancer le serveur :
 #python -m uvicorn app:app --reload
+
 
 #Types de transaction
 class Transaction_type(str, Enum):
     depot = 'deposit'
     retrait = 'withdrawal'
+
 
 #Liste des devises étrangères autorisées
 class Allowed_currencies(str, Enum):
@@ -47,6 +50,7 @@ class Allowed_currencies(str, Enum):
     usa = "USD"
     afrique_sud = "ZAR"
     
+
 #Transaction
 class Transaction(BaseModel):
     label: str
@@ -55,8 +59,10 @@ class Transaction(BaseModel):
     type: Transaction_type
     date: datetime.date=datetime.datetime.now().strftime('%Y-%m-%d')
 
+
 class Account(BaseModel):
     account_id: str
+
 
 class Client(BaseModel):
     name: str
@@ -141,8 +147,8 @@ async def create_client(client: Client):
     db_clients = db.get_clients()
 
     # Trouve un nouvel identifiant
-    #client_id = str(int(max(db_clients.keys(), default=0)) + 1) #Limite à la création de 10 comptes (pas très rentable pour une banque...)
     client_id = str(int(max(map(int, db_clients.keys()), default=0)) + 1)
+
     # Ajoute le client à la base
     db_clients[client_id] = {
         'name': client.name,
@@ -196,20 +202,18 @@ async def delete_client(client_id: str):
     Returns:
         message de réalisation ou de non réalisation de la suppression
     """
-    # Vérifie que le client éxiste
+    # Récupère le client de la base
     db = Database()
-    #db.get_client(client_id)
-    db_clients = db.get_clients()
+    db.get_client(client_id)
 
-    if check_if_data_is_existing(db_clients, client_id):
-        # Supprime le client
-        #del db_clients[client_id]
-        deleted_client = db_clients.pop(client_id)
-        # Sauvegarde la base
-        db.save()
+    #suppression du client
+    deleted_client = db.get_clients().pop(client_id)
 
-        #On retourne le client supprimé
-        return deleted_client
+    # Sauvegarde la base
+    db.save()
+
+    #On retourne le client supprimé
+    return deleted_client
 
 
 
@@ -234,10 +238,7 @@ async def get_client_accounts(client_id: str):
     """
     # Récupère le client de la base
     db = Database()
-    #db_client = db.get_client(client_id)
 
-    # Retourne une liste formatée
-    # return db_client['accounts']
     return db.get_accounts(client_id)
 
 
@@ -254,14 +255,12 @@ async def get_client_account(client_id: str, account_id: str):
     """
     'On force le compte en majuscule'
     account_id = account_id.upper()
+
     # Récupère le client de la base
     db = Database()
     db.get_client(client_id)
-    # On récupère le compte voulu
-    #db_account = db.get_client(client_id)['accounts'][account_id]
 
     # Retourne une liste formatée
-    #return db_account
     return db.get_account(client_id, account_id)
 
 
@@ -328,11 +327,10 @@ async def delete_client_account(client_id: str, account_id: str):
     #Suppression du compte si son solde est à 0
     if solde_compte != 0:
         raise HTTPException(status_code=202, detail=f"Suppression du compte {account_id} impossible car le solde n'est pas à 0 (solde du compte : {solde_compte} €)")
-        #return f"Suppression du compte {account_id} impossible car le solde n'est pas à 0 (solde du compte : {solde_compte} €)"
     else:
         del db_client['accounts'][account_id]
-    #deleted_account = db_account.pop(account_id)
-    # Sauvegarde la base
+
+        # Sauvegarde la base
         db.save()
         return f"Suppression du compte {account_id} pour le client {client_id} effectuée."
 
@@ -355,18 +353,16 @@ async def update_client_balance(client_id: str, account_id: str, amount_to_set: 
     'On force le compte en majuscule'
     account_id = account_id.upper()
     type_transaction = None
+
     # Récupère le client de la base
     db = Database()
-    #db_account = db.get_client(client_id)['accounts'][account_id]
-
     db.get_client(client_id)
     db_account = db.get_account(client_id, account_id)
+
     solde_avant_modif = db_account['balance']
+
     #Calcul du montant de l'opération à enregistrer
     montant_operation = amount_to_set-solde_avant_modif
-    print('mt opé: ', montant_operation)
-
-    print('solde avant changement: ', solde_avant_modif, ' - solde après: ', amount_to_set)
 
     #Détermination du type de transaction
     if montant_operation < 0:
@@ -374,20 +370,13 @@ async def update_client_balance(client_id: str, account_id: str, amount_to_set: 
     else:
         type_transaction = Transaction_type.depot.value 
 
-    #db_account["transaction"]
     id_transaction = len(db_account["transaction"])+1
-
-    print(id_transaction)
 
     #Création de la transaction liée à la modiciation de solde
     transaction = initialize_transaction(label="Modification du solde", trade_amount=abs(montant_operation), type=type_transaction, id_transaction=id_transaction)
 
-    print(transaction)
-
     #Enregistrement de la transaction
     db_account["transaction"].append(transaction)
-
-    print(db_account["transaction"])
 
     #Enregistrement du nouveau solde
     db_account['balance']=amount_to_set
@@ -428,7 +417,6 @@ async def get_account_transactions(client_id: str, account_id: str):
     return db.get_transactions(client_id, account_id)
 
 
-
 @app.get("/clients/{client_id}/{account_id}/transactions/{transaction_id: int}")
 async def get_account_transactions(client_id: str, account_id: str, transaction_id: int):
     """
@@ -448,9 +436,6 @@ async def get_account_transactions(client_id: str, account_id: str, transaction_
 
     db.get_client(client_id)
     db.get_account(client_id, account_id)
-    #db_clients = db.get_clients()
-
-    #db_transactions = db_clients[client_id]['accounts'][account_id]["transaction"]
 
     return db.get_transaction(client_id, account_id, transaction_id)
 
@@ -476,65 +461,39 @@ async def create_transaction(client_id: str, account_id: str, transaction: Trans
     'On force le compte en majuscule'
     account_id = account_id.upper()
 
-    #amount_in_euro = 0
     db = Database()
     db.get_client(client_id)
     db_account= db.get_account(client_id, account_id)
-    #transaction = f"Date: {date} - {transaction_type} - Montant: {amount} € - {label}"
-    #transaction = f"Date: {transaction_add.date} - {transaction_add.type} - Montant: {transaction_add.value} € - {transaction_add.label}"
-
-    #Allowed_currencies
-    #values = [item.value for item in Allowed_currencies]
 
     db_clients = db.get_clients()
     
     #On récupère le solde du compte
     solde_compte = float(db_account["balance"])
-    #decouvert_autorise = db_clients[client_id]['accounts'][account_id]["authorized_overdraft"]
+ 
     decouvert_autorise = db_account['authorized_overdraft']
-    print(decouvert_autorise)
-    print(type(decouvert_autorise))
 
     db_transaction = db_clients[client_id]['accounts'][account_id]["transaction"]
 
     #On transforme le json en dictionnaire
     transaction = jsonable_encoder(transaction)
 
-    print('Transaction après récup json: ',transaction)
-
-    #Contrôle de la devise effectué en amont
-    #currency = transaction['trade_currency']
-
-    #if currency in values == 0:
-    #    print("Devise non présente")
-    #else:
-    #    print("Devise Ok")
-
     if transaction['type'] == Transaction_type.retrait and solde_compte <= 0 and abs(solde_compte) >= decouvert_autorise:
         return "Transaction refusée"
     
-
     #On récupère le montant de l'opération
     montant_operation = float(transaction['trade_amount'])
 
-
-    print('montant opération: ',montant_operation)
-    print('devise source: ',transaction['trade_currency'])
-    
-
-
     if transaction['trade_currency'] == "EUR":
+        # Si la transaction est en Euros, pas de conversion
         amount_in_euro = montant_operation
     else:
+        # Si la transaction est en devise, on passe par l'API de conversion
         retour_convertion = currency_converter(transaction['trade_currency'], "EUR", montant_operation) 
         amount_in_euro = round(retour_convertion["result"],2)
-        #amount_in_euro = 94.69 #Forcé pour ne pas utiliser les crédits de l'API
 
-    
+    # On renseigne le montant en Euros de la transaction
     transaction['amount_in_euro']=amount_in_euro
     transaction['account_currency']="EUR"
-    
-    print(f"{montant_operation} {transaction['trade_currency']} donne {amount_in_euro} €")
 
     #On récupère le sens de l'opération
     type_transaction = transaction['type']
@@ -548,25 +507,18 @@ async def create_transaction(client_id: str, account_id: str, transaction: Trans
     #On affecte le nouveau solde
     db_clients[client_id]['accounts'][account_id]["balance"]=solde_compte
 
-    print('nouveau solde: ',  db_clients[client_id]['accounts'][account_id]["balance"])
-
-
-    print('sens: ',type_transaction)
-    print(Transaction_type.depot == type_transaction)
-
     #On détermine le numéro de transaction
     id_transaction = len(db_transaction)+1
-    print('ID trans: ', id_transaction)
-
     transaction['id_transaction']=id_transaction
-    print('Transaction (fin): ', transaction)
 
+    # On ajoute la transaction
     db_transaction.append(transaction)
-    
+
+    # Sauvegarde de la base
     db.save()
 
     return f"Transaction n°{id_transaction} enregistrée sur le compte {account_id}"
-    #return db_account
+
 
 
 # ************************** PUT Transactions **************************
@@ -594,11 +546,7 @@ async def update_transaction(client_id: str, account_id: str, transaction_id: in
         #On récupère la liste des transactions
         db_transaction = db.get_transaction(client_id, account_id, transaction_id)
         
-
-
         db_transaction['label'] = transaction_label
-
-        print(db_transaction)
 
         db.save()
 
@@ -628,32 +576,20 @@ async def delete_transaction(client_id: str, account_id: str, transaction_id: in
     db_account = db.get_account(client_id, account_id)
     db_transaction = db.get_transaction(client_id, account_id, transaction_id)
     db_transactions = db.get_transactions(client_id, account_id)
-    print("Solde avant modif: ", db_account['balance'])
 
-    #cancel_transaction = transaction_to_delete
+    # On crée la transaction d'annulation (reflet de la trasaction d'origine)
     cancellation = copy(db_transaction)
 
-    print('avant modif (cancellation): ', cancellation)
-    print('Solde avant modif: ', db_account['balance'])
-
+    # On modifie les éléments de la transaction d'annulation
     if db_transaction['type'] == Transaction_type.depot.value:
-        print('un dépot')
         cancellation['type'] = Transaction_type.retrait.value
         db_account['balance'] -= db_transaction['amount_in_euro']
     else:
-        print('un retrait')
         cancellation['type'] = Transaction_type.depot.value
-        print(Transaction_type.depot.value)
-        print(cancellation['type'])
         db_account['balance'] += db_transaction['amount_in_euro']
 
     cancellation['id_transaction'] = len(db_transactions)+1
     cancellation['label'] = f"Annulation opération n°{transaction_id}"
-    print('Solde après modif: ', db_account['balance'])
-
-    print('origine : ',db_transaction)
-    print('copie : ',cancellation)
-    print("Solde après modif: ", db_account['balance'])
 
     #Modification du solde
     db_transactions.append(cancellation)
@@ -661,8 +597,6 @@ async def delete_transaction(client_id: str, account_id: str, transaction_id: in
     db.save()
 
     return cancellation
-
-
 
 
 @app.post("/clients/{client_id}/{accouunt_id}/transfert/")
@@ -685,11 +619,13 @@ async def transfert(client_id: str, account_id_debited: str, account_id_credited
 
     # Récupère le client de la base
     db = Database()
-    #db_account = db.get_client(client_id)['accounts'][account_id]
-
     db.get_client(client_id)
+
+    # Compte à débiter
     account_debited = db.get_account(client_id, account_id_debited)
     db_transactions_account_debited = db.get_transactions(client_id, account_id_debited)
+
+    # Compte à créditer
     account_credited = db.get_account(client_id, account_id_credited)
     db_transactions_account_credited = db.get_transactions(client_id, account_id_credited)
 
@@ -708,4 +644,5 @@ async def transfert(client_id: str, account_id_debited: str, account_id_credited
         account_credited['balance']+=amount_to_transfer
 
         db.save()
+        
         return f"Transfert de {amount_to_transfer} € du compte {account_id_debited} vers le compte {account_id_credited} effectué."

@@ -36,15 +36,16 @@ Une fois téléchargé, décompressez-le dans le dossier de votre choix (que nou
 L'arborescence du dossier décompressé est la suivante :
 ```jsx
 sheldon-tournament (répertoire principal [main_folder])
-    __pycache__
+    [__pycache__]
     .gitignore
+    README.md
     __init__.py
     account_utility.py
     app.py
     convert_utility.py
     database.py
+    requirements.txt
     main.py
-    README.md
 ```
 
 
@@ -79,7 +80,8 @@ Voici, pour l'instant, les différentes fonctionnalités présentes dans l'outil
 * Obtenir un compte d'un client
 * Suppression du compte d'un client
 * Mise à jour du solde d'un client
-* Obtenir le détail d'un transaction
+* Obtenir les transactions d'un compte
+* Obtenir le détail d'une transaction
 * Création d'une transaction
 * Mise à jour d'une transaction
 * Annulation d'une transaction

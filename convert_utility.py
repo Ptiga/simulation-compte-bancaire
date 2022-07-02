@@ -1,5 +1,6 @@
 import requests
 
+# API de conversion de montants en devise vers l'Euro
 def currency_converter(source_currency, aimed_currency, amount_to_convert):
 
     url = "https://currency-conversion-and-exchange-rates.p.rapidapi.com/convert"
@@ -14,21 +15,3 @@ def currency_converter(source_currency, aimed_currency, amount_to_convert):
     response = requests.request("GET", url, headers=headers, params=querystring)
 
     return response.json()
-
-#    print('réponse: ',response)
-#    print('réponse (en txt): ',response.text)
-#    print(type(response.text))
-#    print(response.content)
-#    print('JSON: ',response.json())
-#    print(type(response.json()))
-
-#    reponse_dico = jsonable_encoder(response.json())
-
-#    print('réponse dico:')
-#    print(reponse_dico)
-#    print(type(reponse_dico))
-#    print(reponse_dico["result"])
-
-
-
-#currency_converter("USD", "EUR", 100.00)
